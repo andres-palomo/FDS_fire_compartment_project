@@ -1,0 +1,512 @@
+! ============================================================================
+! VIB Hasenheide FDS Round-Robin Study - Stage 1: Semi-Blind Prediction
+! Scenario: hep_160_150
+!
+! This input file provides the reference geometry and measurement locations
+! for the semi-blind prediction exercise.
+!
+! The following elements are intentionally NOT prescribed and shall be defined
+! by the participants:
+!   - Computational mesh (MESH)
+!   - Reaction / fuel model (REAC)
+!   - Fire source implementation based on the provided fuel mass history
+!   - Soot yield, CO yield and radiative fraction
+!   - Wall and material properties
+!   - Leakage assumptions
+!   - Smoke detector model or activation criterion
+!
+! The quantities and locations defined via DEVC entries form the common basis
+! for intercomparison. Additional quantities and sensors may be used, provided
+! they are documented in the questionnaire.
+!
+! IMPORTANT: Do NOT rename or remove the DEVC entries defined in this template.
+! Consistent IDs across all submissions are required for automated
+! post-processing and intercomparison. Additional DEVC entries may be added.
+!
+! Do NOT modify the &MISC and &DUMP settings. These define the common ambient
+! conditions and output intervals for all submissions.
+!
+! Windows remain closed during the pre-ventilation phase.
+! Air leakage is present but not explicitly defined.
+!
+! FDS version: 6.11.0
+! Simulation end time corresponds to the pre-ventilation period.
+!
+! This template is not intended to be run without participant-defined MESH,
+! REAC and fire source entries.
+! ============================================================================
+! Replace <ParticipantID> with the assigned anonymous participant ID.
+! Replace <RunID> with best_estimate, sensitivity_01, sensitivity_02, ...
+&HEAD CHID='hep_160_150_1_1',
+      TITLE='VIB Hasenheide Stage 1 | hep_160_150 | <ParticipantID> | <RunID>'/
+
+&TIME T_END=340/ ! Pre-ventilation period = 20 min, prescribed mass-loss curve alone runs to t=334 s
+&DUMP DT_CPU=1.0, DT_CTRL=1.0, DT_DEVC=1.0, DT_HRR=1.0, DT_MASS=1.0, MASS_FILE=.TRUE./
+&MISC TMPA=12.1, HUMIDITY=73.2, P_INF=99300.0, SURF_DEFAULT='BRICK_WALL'/
+
+! ---------------------------------------------------------------------------
+! Computational mesh
+!
+! Participants shall define the computational mesh. The outline below indicates
+! the approximate compartment-wise mesh extents only. Mesh resolution, mesh
+! decomposition and any local mesh refinement remain participant choices and
+! shall be documented in the questionnaire.
+!
+! Example structure only - replace IJK=... before running.
+! ---------------------------------------------------------------------------
+
+! ORIGINAL MESH (reference, single-mesh-per-room, 0.05 m cells throughout)
+! &MESH ID='F1', IJK= 85,88,51, XB=0.0,4.25,0.00,4.40,0.0,2.55/
+! &MESH ID='F2', IJK= 92,66,51, XB=0.0,4.60,4.40,7.70,0.0,2.55/
+! &MESH ID='FC', IJK= 21,70,51, XB=0.0,1.05,7.70,11.2,0.0,2.55/
+! &MESH ID='F3', IJK= 92,66,51, XB=0.0,4.60,11.2,14.5,0.0,2.55/
+
+! ---------------------------------------------------------------------------
+! Mesh in use:
+!   F1 - fire compartment: original 0.05 m granularity retained, split into
+!        2 MPI partitions (single interface line at x=2.20, chosen because
+!        the fire pan, x=2.000-2.150, sits entirely on the low-x side of the
+!        split; the Load_cell obst, x=1.800-2.350, still straddles the
+!        interface, exactly as it already did in the previous 4-way split,
+!        so this is a proven-safe cut line). Cell count and geometry are
+!        unchanged from the original single F1 mesh (85x88x51 total).
+!   F2 - kept exactly as the original reference mesh (0.05 m cells).
+!   FC - coarsened: 0.35 m x 0.35 m x 0.05 m cells (7x coarser in x/y than
+!        the original 0.05 m grid; 1.05 m and 3.5 m both divide evenly by
+!        0.35 m, so cell edges stay aligned with the 0.05 m reference grid).
+!        Vertical (z) resolution kept at 0.05 m to match the other rooms,
+!        since FC has no thermocouples and is mainly a smoke-transport path.
+!   F3 - coarsened: 0.10 m x 0.10 m x 0.05 m cells (2x coarser in x/y than
+!        the original 0.05 m grid; 4.60 m and 3.30 m both divide evenly by
+!        0.10 m). Kept less coarse than FC because F3 carries thermocouples,
+!        an optical path and a smoke alarm.
+! MPI_PROCESS 0-1 = F1 partitions, 2 = F2, 3 = FC, 4 = F3 (5 processes total).
+! ---------------------------------------------------------------------------
+
+&MESH ID='F1a', IJK=44,88,51, XB=0.00,2.20, 0.00,4.40, 0.00,2.55, MPI_PROCESS=0/
+&MESH ID='F1b', IJK=41,88,51, XB=2.20,4.25, 0.00,4.40, 0.00,2.55, MPI_PROCESS=1/
+
+&MESH ID='F2', IJK=92,66,51, XB=0.00,4.60, 4.40,7.70, 0.00,2.55, MPI_PROCESS=2/
+&MESH ID='FC', IJK=3,10,51,  XB=0.00,1.05, 7.70,11.20,0.00,2.55, MPI_PROCESS=3/
+&MESH ID='F3', IJK=46,33,51, XB=0.00,4.60,11.20,14.50,0.00,2.55, MPI_PROCESS=4/
+
+! Participants shall define REAC, fire source implementation,
+! soot yield, CO yield and radiative fraction.
+
+! ---------------------------------------------------------------------------
+! Material properties (SFPE Handbook, per Report Section 2.2)
+!   - Walls:          Table A.28, "Building brick, common"
+!   - Floor/ceiling:  Table A.28, "Fir" (timber beam construction)
+!   - Windows:        double glazing simplified to a single glass layer,
+!                      air gap omitted (per report Section 2.2.1)
+!
+! Thicknesses are not given in the handbook table and are assumed here as
+! typical values for this construction type; adjust with the professor if a
+! different thickness is preferred:
+!   - Brick wall:    0.24 m (solid masonry wall, typical for this building era)
+!   - Fir floor/ceiling: 0.15 m (lumped single-layer equivalent of the
+!     timber beam + board assembly; the slag fill interlayer is not modelled
+!     separately)
+!   - Glass:          0.008 m (single-layer equivalent of the double glazing)
+! ---------------------------------------------------------------------------
+
+&MATL ID='BRICK_MASONRY',
+      DENSITY=1600.,
+      CONDUCTIVITY=0.69,
+      SPECIFIC_HEAT=0.84,
+      EMISSIVITY=0.9 /
+
+&MATL ID='FIR_TIMBER',
+      DENSITY=420.,
+      CONDUCTIVITY=0.11,
+      SPECIFIC_HEAT=2.72,
+      EMISSIVITY=0.9 /
+
+&MATL ID='GLASS_COROSILICA',
+      DENSITY=2700.,
+      CONDUCTIVITY=0.78,
+      SPECIFIC_HEAT=0.84,
+      EMISSIVITY=0.9 /
+
+&SURF ID='BRICK_WALL',
+      MATL_ID='BRICK_MASONRY',
+      THICKNESS=0.24,
+      COLOR='RED BROWN' /
+
+&SURF ID='FIR_CEILING_FLOOR',
+      MATL_ID='FIR_TIMBER',
+      THICKNESS=0.15,
+      COLOR='TAN' /
+
+&SURF ID='GLASS_WINDOW',
+      MATL_ID='GLASS_COROSILICA',
+      THICKNESS=0.008,
+      COLOR='LIGHT BLUE',
+      TRANSPARENCY=0.5 /
+
+! ---------------------------------------------------------------------------
+! Floor and ceiling (domain top/bottom, z=0.00 and z=2.55, for every room)
+! SURF_DEFAULT is BRICK_WALL, so these VENTs override the floor/ceiling
+! planes with the Fir timber surface.
+! ---------------------------------------------------------------------------
+&VENT ID='Floor_F1',    XB=0.00,4.25, 0.00,4.40, 0.00,0.00, SURF_ID='FIR_CEILING_FLOOR'/
+&VENT ID='Ceiling_F1',  XB=0.00,4.25, 0.00,4.40, 2.55,2.55, SURF_ID='FIR_CEILING_FLOOR'/
+&VENT ID='Floor_F2',    XB=0.00,4.60, 4.40,7.70, 0.00,0.00, SURF_ID='FIR_CEILING_FLOOR'/
+&VENT ID='Ceiling_F2',  XB=0.00,4.60, 4.40,7.70, 2.55,2.55, SURF_ID='FIR_CEILING_FLOOR'/
+&VENT ID='Floor_FC',    XB=0.00,1.05, 7.70,11.20,0.00,0.00, SURF_ID='FIR_CEILING_FLOOR'/
+&VENT ID='Ceiling_FC',  XB=0.00,1.05, 7.70,11.20,2.55,2.55, SURF_ID='FIR_CEILING_FLOOR'/
+&VENT ID='Floor_F3',    XB=0.00,4.60,11.20,14.50,0.00,0.00, SURF_ID='FIR_CEILING_FLOOR'/
+&VENT ID='Ceiling_F3',  XB=0.00,4.60,11.20,14.50,2.55,2.55, SURF_ID='FIR_CEILING_FLOOR'/
+
+&OBST ID='Wall_01', XB=0.00,0.45, 4.40, 4.8,0.0,2.55, SURF_ID='BRICK_WALL'/
+&OBST ID='Wall_02', XB=0.00,0.45, 14.1,14.5,0.0,2.55, SURF_ID='BRICK_WALL'/
+
+&OBST ID='Wall_03', XB=0.00,1.05, 7.70,7.85,0.0,2.55, SURF_ID='BRICK_WALL'/
+&OBST ID='Wall_04', XB=0.00,1.05,11.05,11.2,0.0,2.55, SURF_ID='BRICK_WALL'/
+
+&OBST ID='Wall_05', XB=0.00,4.60, 4.20, 4.4,0.0,2.55, SURF_ID='BRICK_WALL'/
+
+&OBST ID='Wall_06', XB=4.15,4.25, 0.00, 4.2,0.0,2.55, SURF_ID='BRICK_WALL'/
+&OBST ID='Wall_07', XB=4.50,4.60, 4.40, 7.7,0.0,2.55, SURF_ID='BRICK_WALL'/
+&OBST ID='Wall_08', XB=4.50,4.60, 11.2,14.5,0.0,2.55, SURF_ID='BRICK_WALL'/
+
+&HOLE ID='Door_F1-F2', XB=0.82,1.65,4.15, 4.45,-0.05,1.97/ 
+&HOLE ID='Door_F2-FC', XB=0.13,0.95,7.65, 7.90,-0.05,1.97/ 
+&HOLE ID='Door_FC-F3', XB=0.11,0.95,11.0,11.25,-0.05,1.97/ 
+
+! Window openings are cut into the wall and then closed by OBST Window_*.
+! Windows remain closed during the pre-ventilation phase.
+&OBST ID='Window_F1', XB=4.24,4.25, 1.36, 2.65,0.92,2.14, PERMIT_HOLE=.FALSE., SURF_ID='GLASS_WINDOW'/ 
+&OBST ID='Window_F2', XB=4.59,4.60, 5.40, 6.69,0.92,2.14, PERMIT_HOLE=.FALSE., SURF_ID='GLASS_WINDOW'/ 
+&OBST ID='Window_F3', XB=4.59,4.60,12.22,13.55,0.92,2.23, PERMIT_HOLE=.FALSE., SURF_ID='GLASS_WINDOW'/ 
+&HOLE ID='Window_F1', XB=4.10,4.25, 1.36, 2.65,0.92,2.14/ 
+&HOLE ID='Window_F2', XB=4.45,4.60, 5.40, 6.69,0.92,2.14/ 
+&HOLE ID='Window_F3', XB=4.45,4.60,12.22,13.55,0.92,2.23/ 
+
+! The pan geometry below approximates the 160 mm x 160 mm steel pan with coordinates
+! snapped to multiples of 0.05 m, compatible with mesh cell sizes that are multiples
+! or fractions of 5 cm. The resulting fuel surface (Fire_pan) is 150 mm x 150 mm = 0.0225 m^2.
+! Compute MLRPUA or HRRPUA from the prescribed mass-loss curve and THIS model surface
+! area (0.0225 m^2), so that the total mass loss rate / HRR released equals the prescribed
+! curve. Using the physical pan area (0.0256 m^2 = 160 mm x 160 mm) with this surface would
+! under-release the total by ~12 %.
+&OBST ID='Load_cell',  XB=1.800,2.350,1.900,2.350,0.00,0.15/
+&OBST ID='Fire_pan',   XB=2.000,2.150,2.050,2.200,0.20,0.20, SURF_IDS = 'BURNER_PAN', 'INERT', 'INERT'/ ! fuel surface, 150 mm x 150 mm
+&OBST ID='Pan_wall_W', XB=2.000,2.000,2.050,2.200,0.20,0.30/
+&OBST ID='Pan_wall_E', XB=2.150,2.150,2.050,2.200,0.20,0.30/
+&OBST ID='Pan_wall_S', XB=2.000,2.150,2.050,2.050,0.20,0.30/
+&OBST ID='Pan_wall_N', XB=2.000,2.150,2.200,2.200,0.20,0.30/
+
+! Thermocouples: bead diameter 1 mm (= FDS default). QUANTITY='THERMOCOUPLE' models the
+! radiation-affected bead response (not the gas temperature) to match the measured TCs.
+&DEVC ID='TC_Ceiling_F1', QUANTITY='THERMOCOUPLE', XYZ=2.0625,2.1375,2.54/
+
+&DEVC ID='TC_F1_0_6', QUANTITY='THERMOCOUPLE', XYZ=3.650,0.5,0.6/
+&DEVC ID='TC_F1_1_2', QUANTITY='THERMOCOUPLE', XYZ=3.650,0.5,1.2/
+&DEVC ID='TC_F1_1_6', QUANTITY='THERMOCOUPLE', XYZ=3.650,0.5,1.6/
+&DEVC ID='TC_F1_1_8', QUANTITY='THERMOCOUPLE', XYZ=3.650,0.5,1.8/
+&DEVC ID='TC_F1_2_0', QUANTITY='THERMOCOUPLE', XYZ=3.650,0.5,2.0/
+&DEVC ID='TC_F1_2_2', QUANTITY='THERMOCOUPLE', XYZ=3.650,0.5,2.2/
+&DEVC ID='TC_F1_2_4', QUANTITY='THERMOCOUPLE', XYZ=3.650,0.5,2.4/
+&DEVC ID='TC_F1_2_5', QUANTITY='THERMOCOUPLE', XYZ=3.650,0.5,2.5/
+
+&DEVC ID='EXT_F1_0_6', QUANTITY='EXTINCTION COEFFICIENT', XYZ=3.650,0.5,0.6/
+&DEVC ID='EXT_F1_1_2', QUANTITY='EXTINCTION COEFFICIENT', XYZ=3.650,0.5,1.2/
+&DEVC ID='EXT_F1_1_6', QUANTITY='EXTINCTION COEFFICIENT', XYZ=3.650,0.5,1.6/
+&DEVC ID='EXT_F1_1_8', QUANTITY='EXTINCTION COEFFICIENT', XYZ=3.650,0.5,1.8/
+&DEVC ID='EXT_F1_2_0', QUANTITY='EXTINCTION COEFFICIENT', XYZ=3.650,0.5,2.0/
+&DEVC ID='EXT_F1_2_2', QUANTITY='EXTINCTION COEFFICIENT', XYZ=3.650,0.5,2.2/
+&DEVC ID='EXT_F1_2_4', QUANTITY='EXTINCTION COEFFICIENT', XYZ=3.650,0.5,2.4/
+&DEVC ID='EXT_F1_2_5', QUANTITY='EXTINCTION COEFFICIENT', XYZ=3.650,0.5,2.5/
+
+&DEVC ID='TC_F2_0_6', QUANTITY='THERMOCOUPLE', XYZ=2.225,5.9,0.6/
+&DEVC ID='TC_F2_1_2', QUANTITY='THERMOCOUPLE', XYZ=2.225,5.9,1.2/
+&DEVC ID='TC_F2_1_6', QUANTITY='THERMOCOUPLE', XYZ=2.225,5.9,1.6/
+&DEVC ID='TC_F2_1_8', QUANTITY='THERMOCOUPLE', XYZ=2.225,5.9,1.8/
+&DEVC ID='TC_F2_2_0', QUANTITY='THERMOCOUPLE', XYZ=2.225,5.9,2.0/
+&DEVC ID='TC_F2_2_2', QUANTITY='THERMOCOUPLE', XYZ=2.225,5.9,2.2/
+&DEVC ID='TC_F2_2_4', QUANTITY='THERMOCOUPLE', XYZ=2.225,5.9,2.4/
+&DEVC ID='TC_F2_2_5', QUANTITY='THERMOCOUPLE', XYZ=2.225,5.9,2.5/
+
+&DEVC ID='EXT_F2_0_6', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.225,5.9,0.6/
+&DEVC ID='EXT_F2_1_2', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.225,5.9,1.2/
+&DEVC ID='EXT_F2_1_6', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.225,5.9,1.6/
+&DEVC ID='EXT_F2_1_8', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.225,5.9,1.8/
+&DEVC ID='EXT_F2_2_0', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.225,5.9,2.0/
+&DEVC ID='EXT_F2_2_2', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.225,5.9,2.2/
+&DEVC ID='EXT_F2_2_4', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.225,5.9,2.4/
+&DEVC ID='EXT_F2_2_5', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.225,5.9,2.5/
+
+&DEVC ID='TC_F3_0_6', QUANTITY='THERMOCOUPLE', XYZ=2.275,12.925,0.6/
+&DEVC ID='TC_F3_1_2', QUANTITY='THERMOCOUPLE', XYZ=2.275,12.925,1.2/
+&DEVC ID='TC_F3_1_6', QUANTITY='THERMOCOUPLE', XYZ=2.275,12.925,1.6/
+&DEVC ID='TC_F3_1_8', QUANTITY='THERMOCOUPLE', XYZ=2.275,12.925,1.8/
+&DEVC ID='TC_F3_2_0', QUANTITY='THERMOCOUPLE', XYZ=2.275,12.925,2.0/
+&DEVC ID='TC_F3_2_2', QUANTITY='THERMOCOUPLE', XYZ=2.275,12.925,2.2/
+&DEVC ID='TC_F3_2_4', QUANTITY='THERMOCOUPLE', XYZ=2.275,12.925,2.4/
+&DEVC ID='TC_F3_2_5', QUANTITY='THERMOCOUPLE', XYZ=2.275,12.925,2.5/
+
+&DEVC ID='EXT_F3_0_6', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.275,12.925,0.6/
+&DEVC ID='EXT_F3_1_2', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.275,12.925,1.2/
+&DEVC ID='EXT_F3_1_6', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.275,12.925,1.6/
+&DEVC ID='EXT_F3_1_8', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.275,12.925,1.8/
+&DEVC ID='EXT_F3_2_0', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.275,12.925,2.0/
+&DEVC ID='EXT_F3_2_2', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.275,12.925,2.2/
+&DEVC ID='EXT_F3_2_4', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.275,12.925,2.4/
+&DEVC ID='EXT_F3_2_5', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.275,12.925,2.5/
+
+! Optical instrument locations (LEM / SICK). Point extinction at the path centre is used:
+! it was verified to be an essentially unbiased estimate of the path-mean extinction
+! reported by the transmissometers.
+&DEVC ID='EXT_DEVC_F1_2_3', QUANTITY='EXTINCTION COEFFICIENT', XYZ=3.150, 3.725,2.3/
+&DEVC ID='EXT_DEVC_F2_1_5', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.275, 6.275,1.5/
+&DEVC ID='EXT_DEVC_F2_1_9', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.275, 6.275,1.9/
+&DEVC ID='EXT_DEVC_F2_2_1', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.275, 6.275,2.1/
+&DEVC ID='EXT_DEVC_F2_2_3', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.275, 6.325,2.3/
+&DEVC ID='EXT_DEVC_F3_2_3', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.275,12.775,2.3/
+
+! ---------------------------------------------------------------------------
+! Smoke alarm locations
+!
+! The experimental smoke alarms were optical smoke alarms according to
+! DIN EN 14604. The activation threshold is not prescribed; participants
+! shall define, justify and document their own value.
+!
+! Replace SETPOINT=... with the participant-defined activation threshold
+! [1/m]. FDS then records the activation time in the .out file under
+! "DEVICE Activation Times"; the continuous extinction coefficient is
+! still written to the _devc.csv.
+! Alternatively, participants may define an FDS detector model or apply
+! a documented post-processing criterion instead of using SETPOINT.
+! ---------------------------------------------------------------------------
+
+! NOTE: SETPOINT=0.083 [1/m] is a provisional placeholder (roughly the light-
+! extinction coefficient often associated with photoelectric smoke-alarm
+! obscuration thresholds) so the file parses. This still needs a documented,
+! justified value from you/the professor before the final submission.
+&DEVC ID='SD_F2_EXT', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.125, 6.000,2.51, SETPOINT=0.083/ ! Participant-defined activation threshold [1/m]; activation time reported in .out
+&DEVC ID='SD_FC_EXT', QUANTITY='EXTINCTION COEFFICIENT', XYZ=0.550, 9.450,2.51, SETPOINT=0.083/ ! Participant-defined activation threshold [1/m]; activation time reported in .out
+&DEVC ID='SD_F3_EXT', QUANTITY='EXTINCTION COEFFICIENT', XYZ=2.275,12.925,2.51, SETPOINT=0.083/ ! Participant-defined activation threshold [1/m]; activation time reported in .out
+
+! Example only - not prescribed:
+! &PROP ID='Smoke Detector', ... /
+! &DEVC ID='SD_F2_DET', PROP_ID='Smoke Detector', XYZ=2.125, 6.000,2.51/
+! &DEVC ID='SD_FC_DET', PROP_ID='Smoke Detector', XYZ=0.550, 9.450,2.51/
+! &DEVC ID='SD_F3_DET', PROP_ID='Smoke Detector', XYZ=2.275,12.925,2.51/
+
+
+!-------------------------------------------------------------------------------------!
+! Fuel definition:
+!   n-alkanes: approximately 35 wt.% (predominantly n-heptane)
+!   iso-alkanes: approximately 15 wt.%
+!   cyclic alkanes (naphthenes): approximately 45 wt.% (predominantly methylcyclohexane and cyclohexane)
+!   aromatic content: very low
+!
+!
+!Category	      Component	            Mass [%]	Formula	M [g/mol]	ΔHₜ [kJ/kg]	ΔHrad [kJ/kg]	CO yield [kg/kg]	Soot yield [kg/kg]
+!n-alkenes	      n-Heptane	            35%	      C₇H₁₆	      100	      44600	      13600	            0.012	            0.042
+!Iso-alkanes	2 Methyl hexane	      15%	      C₇H₁₆	      100	      44600	      14200	            0.012	            0.037
+!cyclic alkanes	Methyl cyclohexane      25%	      C₇H₁₄	      98	      43400	      15000	            0.018	            0.054
+!cyclic alkanes   Cyclohexane	            20%	      C6H12	      84	      43800	      15300	            0.016	            0.049
+!aromatic content	Toluene	            5%	      C₇H₈	      92	      39700	      15900	            0.064	            0.173
+!
+!   All from the FE handbook :3
+!
+! Averaged values:
+! total heat of combustion: 43895 kJ/kg
+! rediative heat: 14495 kJ/kg
+! rediative fraction = 0.33
+! Mole-weighted average lumped formula:      C7 H14.66 
+! Soot yiel:     0.0522
+! CO yield:      0.0169 
+!-------------------------------------------------------------------------------------!
+&REAC ID='HEPTAN_SURROGATE',
+      FUEL='HEPTAN_SURROGATE',
+      C = 6.8, H = 14.3,
+      HEAT_OF_COMBUSTION = 39540.,
+      SOOT_YIELD = 0.0522,
+      CO_YIELD = 0.0169,
+      RADIATIVE_FRACTION = 0.33, 
+      IDEAL = .FALSE. /
+
+&SURF   ID           = 'BURNER_PAN',
+        COLOR        = 'RED',
+        HRRPUA       = 1115.147,
+        RAMP_Q       = 'hrrpua_hep_160_150' /
+
+! ---- HRRPUA time ramp, generated from mass_loss_hep_160_150.csv ----
+! Model pan area = 0.0225 m^2, dHc = 39540.0 kJ/kg
+! Peak HRRPUA = 1115.147 kW/m2 
+
+&RAMP ID='hrrpua_hep_160_150', T=0.000, F=0.25685 /
+&RAMP ID='hrrpua_hep_160_150', T=2.000, F=0.22886 /
+&RAMP ID='hrrpua_hep_160_150', T=4.000, F=0.24425 /
+&RAMP ID='hrrpua_hep_160_150', T=6.000, F=0.31813 /
+&RAMP ID='hrrpua_hep_160_150', T=8.000, F=0.42294 /
+&RAMP ID='hrrpua_hep_160_150', T=10.000, F=0.47353 /
+&RAMP ID='hrrpua_hep_160_150', T=12.000, F=0.45063 /
+&RAMP ID='hrrpua_hep_160_150', T=14.000, F=0.43512 /
+&RAMP ID='hrrpua_hep_160_150', T=16.000, F=0.46588 /
+&RAMP ID='hrrpua_hep_160_150', T=18.000, F=0.49845 /
+&RAMP ID='hrrpua_hep_160_150', T=20.000, F=0.51396 /
+&RAMP ID='hrrpua_hep_160_150', T=22.000, F=0.53576 /
+&RAMP ID='hrrpua_hep_160_150', T=24.000, F=0.57314 /
+&RAMP ID='hrrpua_hep_160_150', T=26.000, F=0.59654 /
+&RAMP ID='hrrpua_hep_160_150', T=28.000, F=0.59534 /
+&RAMP ID='hrrpua_hep_160_150', T=30.000, F=0.57562 /
+&RAMP ID='hrrpua_hep_160_150', T=32.000, F=0.55014 /
+&RAMP ID='hrrpua_hep_160_150', T=34.000, F=0.53355 /
+&RAMP ID='hrrpua_hep_160_150', T=36.000, F=0.52931 /
+&RAMP ID='hrrpua_hep_160_150', T=38.000, F=0.52390 /
+&RAMP ID='hrrpua_hep_160_150', T=40.000, F=0.51661 /
+&RAMP ID='hrrpua_hep_160_150', T=42.000, F=0.51293 /
+&RAMP ID='hrrpua_hep_160_150', T=44.000, F=0.52556 /
+&RAMP ID='hrrpua_hep_160_150', T=46.000, F=0.55461 /
+&RAMP ID='hrrpua_hep_160_150', T=48.000, F=0.57021 /
+&RAMP ID='hrrpua_hep_160_150', T=50.000, F=0.58094 /
+&RAMP ID='hrrpua_hep_160_150', T=52.000, F=0.57591 /
+&RAMP ID='hrrpua_hep_160_150', T=54.000, F=0.56727 /
+&RAMP ID='hrrpua_hep_160_150', T=56.000, F=0.55745 /
+&RAMP ID='hrrpua_hep_160_150', T=58.000, F=0.55450 /
+&RAMP ID='hrrpua_hep_160_150', T=60.000, F=0.54808 /
+&RAMP ID='hrrpua_hep_160_150', T=62.000, F=0.54294 /
+&RAMP ID='hrrpua_hep_160_150', T=64.000, F=0.53846 /
+&RAMP ID='hrrpua_hep_160_150', T=66.000, F=0.54031 /
+&RAMP ID='hrrpua_hep_160_150', T=68.000, F=0.54728 /
+&RAMP ID='hrrpua_hep_160_150', T=70.000, F=0.55947 /
+&RAMP ID='hrrpua_hep_160_150', T=72.000, F=0.57376 /
+&RAMP ID='hrrpua_hep_160_150', T=74.000, F=0.57624 /
+&RAMP ID='hrrpua_hep_160_150', T=76.000, F=0.58620 /
+&RAMP ID='hrrpua_hep_160_150', T=78.000, F=0.59816 /
+&RAMP ID='hrrpua_hep_160_150', T=80.000, F=0.60956 /
+&RAMP ID='hrrpua_hep_160_150', T=82.000, F=0.61109 /
+&RAMP ID='hrrpua_hep_160_150', T=84.000, F=0.60406 /
+&RAMP ID='hrrpua_hep_160_150', T=86.000, F=0.59372 /
+&RAMP ID='hrrpua_hep_160_150', T=88.000, F=0.59065 /
+&RAMP ID='hrrpua_hep_160_150', T=90.000, F=0.59393 /
+&RAMP ID='hrrpua_hep_160_150', T=92.000, F=0.60488 /
+&RAMP ID='hrrpua_hep_160_150', T=94.000, F=0.60589 /
+&RAMP ID='hrrpua_hep_160_150', T=96.000, F=0.60354 /
+&RAMP ID='hrrpua_hep_160_150', T=98.000, F=0.60679 /
+&RAMP ID='hrrpua_hep_160_150', T=100.000, F=0.61670 /
+&RAMP ID='hrrpua_hep_160_150', T=102.000, F=0.62310 /
+&RAMP ID='hrrpua_hep_160_150', T=104.000, F=0.62236 /
+&RAMP ID='hrrpua_hep_160_150', T=106.000, F=0.60901 /
+&RAMP ID='hrrpua_hep_160_150', T=108.000, F=0.58198 /
+&RAMP ID='hrrpua_hep_160_150', T=110.000, F=0.56394 /
+&RAMP ID='hrrpua_hep_160_150', T=112.000, F=0.56437 /
+&RAMP ID='hrrpua_hep_160_150', T=114.000, F=0.57825 /
+&RAMP ID='hrrpua_hep_160_150', T=116.000, F=0.59218 /
+&RAMP ID='hrrpua_hep_160_150', T=118.000, F=0.60632 /
+&RAMP ID='hrrpua_hep_160_150', T=120.000, F=0.62989 /
+&RAMP ID='hrrpua_hep_160_150', T=122.000, F=0.65779 /
+&RAMP ID='hrrpua_hep_160_150', T=124.000, F=0.67967 /
+&RAMP ID='hrrpua_hep_160_150', T=126.000, F=0.68478 /
+&RAMP ID='hrrpua_hep_160_150', T=128.000, F=0.68581 /
+&RAMP ID='hrrpua_hep_160_150', T=130.000, F=0.69298 /
+&RAMP ID='hrrpua_hep_160_150', T=132.000, F=0.69366 /
+&RAMP ID='hrrpua_hep_160_150', T=134.000, F=0.68494 /
+&RAMP ID='hrrpua_hep_160_150', T=136.000, F=0.66753 /
+&RAMP ID='hrrpua_hep_160_150', T=138.000, F=0.67765 /
+&RAMP ID='hrrpua_hep_160_150', T=140.000, F=0.70668 /
+&RAMP ID='hrrpua_hep_160_150', T=142.000, F=0.72205 /
+&RAMP ID='hrrpua_hep_160_150', T=144.000, F=0.71997 /
+&RAMP ID='hrrpua_hep_160_150', T=146.000, F=0.72177 /
+&RAMP ID='hrrpua_hep_160_150', T=148.000, F=0.74186 /
+&RAMP ID='hrrpua_hep_160_150', T=150.000, F=0.77439 /
+&RAMP ID='hrrpua_hep_160_150', T=152.000, F=0.80552 /
+&RAMP ID='hrrpua_hep_160_150', T=154.000, F=0.82111 /
+&RAMP ID='hrrpua_hep_160_150', T=156.000, F=0.84396 /
+&RAMP ID='hrrpua_hep_160_150', T=158.000, F=0.85894 /
+&RAMP ID='hrrpua_hep_160_150', T=160.000, F=0.86107 /
+&RAMP ID='hrrpua_hep_160_150', T=162.000, F=0.85079 /
+&RAMP ID='hrrpua_hep_160_150', T=164.000, F=0.83795 /
+&RAMP ID='hrrpua_hep_160_150', T=166.000, F=0.83680 /
+&RAMP ID='hrrpua_hep_160_150', T=168.000, F=0.82640 /
+&RAMP ID='hrrpua_hep_160_150', T=170.000, F=0.80426 /
+&RAMP ID='hrrpua_hep_160_150', T=172.000, F=0.79136 /
+&RAMP ID='hrrpua_hep_160_150', T=174.000, F=0.81093 /
+&RAMP ID='hrrpua_hep_160_150', T=176.000, F=0.84557 /
+&RAMP ID='hrrpua_hep_160_150', T=178.000, F=0.86773 /
+&RAMP ID='hrrpua_hep_160_150', T=180.000, F=0.86281 /
+&RAMP ID='hrrpua_hep_160_150', T=182.000, F=0.85797 /
+&RAMP ID='hrrpua_hep_160_150', T=184.000, F=0.86566 /
+&RAMP ID='hrrpua_hep_160_150', T=186.000, F=0.87366 /
+&RAMP ID='hrrpua_hep_160_150', T=188.000, F=0.86077 /
+&RAMP ID='hrrpua_hep_160_150', T=190.000, F=0.84487 /
+&RAMP ID='hrrpua_hep_160_150', T=192.000, F=0.83233 /
+&RAMP ID='hrrpua_hep_160_150', T=194.000, F=0.82684 /
+&RAMP ID='hrrpua_hep_160_150', T=196.000, F=0.82006 /
+&RAMP ID='hrrpua_hep_160_150', T=198.000, F=0.82839 /
+&RAMP ID='hrrpua_hep_160_150', T=200.000, F=0.86652 /
+&RAMP ID='hrrpua_hep_160_150', T=202.000, F=0.90365 /
+&RAMP ID='hrrpua_hep_160_150', T=204.000, F=0.91565 /
+&RAMP ID='hrrpua_hep_160_150', T=206.000, F=0.90120 /
+&RAMP ID='hrrpua_hep_160_150', T=208.000, F=0.88950 /
+&RAMP ID='hrrpua_hep_160_150', T=210.000, F=0.89949 /
+&RAMP ID='hrrpua_hep_160_150', T=212.000, F=0.91378 /
+&RAMP ID='hrrpua_hep_160_150', T=214.000, F=0.89913 /
+&RAMP ID='hrrpua_hep_160_150', T=216.000, F=0.87314 /
+&RAMP ID='hrrpua_hep_160_150', T=218.000, F=0.85962 /
+&RAMP ID='hrrpua_hep_160_150', T=220.000, F=0.86136 /
+&RAMP ID='hrrpua_hep_160_150', T=222.000, F=0.88818 /
+&RAMP ID='hrrpua_hep_160_150', T=224.000, F=0.91109 /
+&RAMP ID='hrrpua_hep_160_150', T=226.000, F=0.92128 /
+&RAMP ID='hrrpua_hep_160_150', T=228.000, F=0.91471 /
+&RAMP ID='hrrpua_hep_160_150', T=230.000, F=0.90481 /
+&RAMP ID='hrrpua_hep_160_150', T=232.000, F=0.91196 /
+&RAMP ID='hrrpua_hep_160_150', T=234.000, F=0.92149 /
+&RAMP ID='hrrpua_hep_160_150', T=236.000, F=0.92792 /
+&RAMP ID='hrrpua_hep_160_150', T=238.000, F=0.90621 /
+&RAMP ID='hrrpua_hep_160_150', T=240.000, F=0.89428 /
+&RAMP ID='hrrpua_hep_160_150', T=242.000, F=0.89490 /
+&RAMP ID='hrrpua_hep_160_150', T=244.000, F=0.90590 /
+&RAMP ID='hrrpua_hep_160_150', T=246.000, F=0.91848 /
+&RAMP ID='hrrpua_hep_160_150', T=248.000, F=0.91131 /
+&RAMP ID='hrrpua_hep_160_150', T=250.000, F=0.91026 /
+&RAMP ID='hrrpua_hep_160_150', T=252.000, F=0.91825 /
+&RAMP ID='hrrpua_hep_160_150', T=254.000, F=0.93939 /
+&RAMP ID='hrrpua_hep_160_150', T=256.000, F=0.95040 /
+&RAMP ID='hrrpua_hep_160_150', T=258.000, F=0.96313 /
+&RAMP ID='hrrpua_hep_160_150', T=260.000, F=0.96540 /
+&RAMP ID='hrrpua_hep_160_150', T=262.000, F=0.96933 /
+&RAMP ID='hrrpua_hep_160_150', T=264.000, F=0.96965 /
+&RAMP ID='hrrpua_hep_160_150', T=266.000, F=0.97350 /
+&RAMP ID='hrrpua_hep_160_150', T=268.000, F=0.98670 /
+&RAMP ID='hrrpua_hep_160_150', T=270.000, F=0.99911 /
+&RAMP ID='hrrpua_hep_160_150', T=272.000, F=0.99057 /
+&RAMP ID='hrrpua_hep_160_150', T=274.000, F=0.95807 /
+&RAMP ID='hrrpua_hep_160_150', T=276.000, F=0.92982 /
+&RAMP ID='hrrpua_hep_160_150', T=278.000, F=0.90961 /
+&RAMP ID='hrrpua_hep_160_150', T=280.000, F=0.89275 /
+&RAMP ID='hrrpua_hep_160_150', T=282.000, F=0.85797 /
+&RAMP ID='hrrpua_hep_160_150', T=284.000, F=0.82119 /
+&RAMP ID='hrrpua_hep_160_150', T=286.000, F=0.79603 /
+&RAMP ID='hrrpua_hep_160_150', T=288.000, F=0.79739 /
+&RAMP ID='hrrpua_hep_160_150', T=290.000, F=0.80029 /
+&RAMP ID='hrrpua_hep_160_150', T=292.000, F=0.79769 /
+&RAMP ID='hrrpua_hep_160_150', T=294.000, F=0.79508 /
+&RAMP ID='hrrpua_hep_160_150', T=296.000, F=0.78634 /
+&RAMP ID='hrrpua_hep_160_150', T=298.000, F=0.78148 /
+&RAMP ID='hrrpua_hep_160_150', T=300.000, F=0.76855 /
+&RAMP ID='hrrpua_hep_160_150', T=302.000, F=0.74796 /
+&RAMP ID='hrrpua_hep_160_150', T=304.000, F=0.72737 /
+&RAMP ID='hrrpua_hep_160_150', T=306.000, F=0.70440 /
+&RAMP ID='hrrpua_hep_160_150', T=308.000, F=0.68355 /
+&RAMP ID='hrrpua_hep_160_150', T=310.000, F=0.66867 /
+&RAMP ID='hrrpua_hep_160_150', T=312.000, F=0.65347 /
+&RAMP ID='hrrpua_hep_160_150', T=314.000, F=0.64107 /
+&RAMP ID='hrrpua_hep_160_150', T=316.000, F=0.63077 /
+&RAMP ID='hrrpua_hep_160_150', T=318.000, F=0.62875 /
+&RAMP ID='hrrpua_hep_160_150', T=320.000, F=0.62068 /
+&RAMP ID='hrrpua_hep_160_150', T=322.000, F=0.57615 /
+&RAMP ID='hrrpua_hep_160_150', T=324.000, F=0.47870 /
+&RAMP ID='hrrpua_hep_160_150', T=326.000, F=0.37500 /
+&RAMP ID='hrrpua_hep_160_150', T=328.000, F=0.30293 /
+&RAMP ID='hrrpua_hep_160_150', T=330.000, F=0.22949 /
+&RAMP ID='hrrpua_hep_160_150', T=332.000, F=0.15663 /
+&RAMP ID='hrrpua_hep_160_150', T=334.000, F=0.08669 /
+
+&RAMP ID='hrrpua_hep_160_150', T=  335.00, F=0.0 /
+
+&TAIL /

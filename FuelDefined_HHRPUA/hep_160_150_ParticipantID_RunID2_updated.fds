@@ -35,13 +35,13 @@
 ! This template is not intended to be run without participant-defined MESH,
 ! REAC and fire source entries.
 ! ============================================================================
-
+The Stadt will next Monat Parkplatz
 ! Replace <ParticipantID> with the assigned anonymous participant ID.
 ! Replace <RunID> with best_estimate, sensitivity_01, sensitivity_02, ...
 &HEAD CHID='hep_160_150_1_1',
       TITLE='VIB Hasenheide Stage 1 | hep_160_150 | <ParticipantID> | <RunID>'/
 
-&TIME T_END=100/ ! Pre-ventilation period = 20 min, prescribed mass-loss curve alone runs to t=334 s
+&TIME T_END=340/ ! Pre-ventilation period = 20 min, prescribed mass-loss curve alone runs to t=334 s
 &DUMP DT_CPU=1.0, DT_CTRL=1.0, DT_DEVC=1.0, DT_HRR=1.0, DT_MASS=1.0, MASS_FILE=.TRUE./
 &MISC TMPA=12.1, HUMIDITY=73.2, P_INF=99300.0/
 
@@ -249,22 +249,6 @@
 !   aromatic content: very low
 !
 !
-!Category	      Component	            Mass [%]	Formula	M [g/mol]	ΔHₜ [kJ/kg]	ΔHrad [kJ/kg]	CO yield [kg/kg]	Soot yield [kg/kg]
-!n-alkenes	      n-Heptane	            35%	      C₇H₁₆	      100	      44600	      13600	            0.012	            0.042
-!Iso-alkanes	2 Methyl hexane	      15%	      C₇H₁₆	      100	      44600	      14200	            0.012	            0.037
-!cyclic alkanes	Methyl cyclohexane      25%	      C₇H₁₄	      98	      43400	      15000	            0.018	            0.054
-!cyclic alkanes   Cyclohexane	            20%	      C6H12	      84	      43800	      15300	            0.016	            0.049
-!aromatic content	Toluene	            5%	      C₇H₈	      92	      39700	      15900	            0.064	            0.173
-!
-!   All from the FE handbook :3
-!
-! Averaged values:
-! total heat of combustion: 43895 kJ/kg
-! rediative heat: 14495 kJ/kg
-! rediative fraction = 0.33
-! Mole-weighted average lumped formula:      C7 H14.66 
-! Soot yiel:     0.0522
-! CO yield:      0.0169 
 !-------------------------------------------------------------------------------------!
 &REAC ID='HEPTAN_SURROGATE',
       FUEL='HEPTAN_SURROGATE',
@@ -277,180 +261,181 @@
 
 &SURF   ID           = 'BURNER_PAN',
         COLOR        = 'RED',
-        HRRPUA       = 1.0,
+        HRRPUA       = 1115.147,
         RAMP_Q       = 'hrrpua_hep_160_150' /
 
 ! ---- HRRPUA time ramp, generated from mass_loss_hep_160_150.csv ----
-! Model pan area = 0.0225 m^2, dHc = 43815.0 kJ/kg
-&RAMP ID='hrrpua_hep_160_150', T=    0.00, F=239.0959 /
-&RAMP ID='hrrpua_hep_160_150', T=    2.00, F=306.5999 /
-&RAMP ID='hrrpua_hep_160_150', T=    4.00, F=367.7089 /
-&RAMP ID='hrrpua_hep_160_150', T=    6.00, F=422.4230 /
-&RAMP ID='hrrpua_hep_160_150', T=    8.00, F=470.7421 /
-&RAMP ID='hrrpua_hep_160_150', T=   10.00, F=512.6662 /
-&RAMP ID='hrrpua_hep_160_150', T=   12.00, F=560.2365 /
-&RAMP ID='hrrpua_hep_160_150', T=   14.00, F=587.0255 /
-&RAMP ID='hrrpua_hep_160_150', T=   16.00, F=595.0899 /
-&RAMP ID='hrrpua_hep_160_150', T=   18.00, F=598.1385 /
-&RAMP ID='hrrpua_hep_160_150', T=   20.00, F=637.2889 /
-&RAMP ID='hrrpua_hep_160_150', T=   22.00, F=679.3567 /
-&RAMP ID='hrrpua_hep_160_150', T=   24.00, F=705.0069 /
-&RAMP ID='hrrpua_hep_160_150', T=   26.00, F=715.8567 /
-&RAMP ID='hrrpua_hep_160_150', T=   28.00, F=716.3023 /
-&RAMP ID='hrrpua_hep_160_150', T=   30.00, F=710.4733 /
-&RAMP ID='hrrpua_hep_160_150', T=   32.00, F=696.0217 /
-&RAMP ID='hrrpua_hep_160_150', T=   34.00, F=670.4877 /
-&RAMP ID='hrrpua_hep_160_150', T=   36.00, F=649.7310 /
-&RAMP ID='hrrpua_hep_160_150', T=   38.00, F=640.1051 /
-&RAMP ID='hrrpua_hep_160_150', T=   40.00, F=638.8816 /
-&RAMP ID='hrrpua_hep_160_150', T=   42.00, F=648.0877 /
-&RAMP ID='hrrpua_hep_160_150', T=   44.00, F=664.4070 /
-&RAMP ID='hrrpua_hep_160_150', T=   46.00, F=678.5588 /
-&RAMP ID='hrrpua_hep_160_150', T=   48.00, F=692.9200 /
-&RAMP ID='hrrpua_hep_160_150', T=   50.00, F=705.3268 /
-&RAMP ID='hrrpua_hep_160_150', T=   52.00, F=710.0070 /
-&RAMP ID='hrrpua_hep_160_150', T=   54.00, F=705.5248 /
-&RAMP ID='hrrpua_hep_160_150', T=   56.00, F=693.9700 /
-&RAMP ID='hrrpua_hep_160_150', T=   58.00, F=684.9731 /
-&RAMP ID='hrrpua_hep_160_150', T=   60.00, F=675.2555 /
-&RAMP ID='hrrpua_hep_160_150', T=   62.00, F=668.9984 /
-&RAMP ID='hrrpua_hep_160_150', T=   64.00, F=668.7524 /
-&RAMP ID='hrrpua_hep_160_150', T=   66.00, F=673.8871 /
-&RAMP ID='hrrpua_hep_160_150', T=   68.00, F=679.5929 /
-&RAMP ID='hrrpua_hep_160_150', T=   70.00, F=686.4640 /
-&RAMP ID='hrrpua_hep_160_150', T=   72.00, F=702.7782 /
-&RAMP ID='hrrpua_hep_160_150', T=   74.00, F=716.8322 /
-&RAMP ID='hrrpua_hep_160_150', T=   76.00, F=728.4714 /
-&RAMP ID='hrrpua_hep_160_150', T=   78.00, F=741.5858 /
-&RAMP ID='hrrpua_hep_160_150', T=   80.00, F=746.0798 /
-&RAMP ID='hrrpua_hep_160_150', T=   82.00, F=743.5653 /
-&RAMP ID='hrrpua_hep_160_150', T=   84.00, F=743.4351 /
-&RAMP ID='hrrpua_hep_160_150', T=   86.00, F=744.3852 /
-&RAMP ID='hrrpua_hep_160_150', T=   88.00, F=738.0272 /
-&RAMP ID='hrrpua_hep_160_150', T=   90.00, F=736.6773 /
-&RAMP ID='hrrpua_hep_160_150', T=   92.00, F=739.6420 /
-&RAMP ID='hrrpua_hep_160_150', T=   94.00, F=742.6995 /
-&RAMP ID='hrrpua_hep_160_150', T=   96.00, F=751.1353 /
-&RAMP ID='hrrpua_hep_160_150', T=   98.00, F=760.6495 /
-&RAMP ID='hrrpua_hep_160_150', T=  100.00, F=764.3420 /
-&RAMP ID='hrrpua_hep_160_150', T=  102.00, F=761.5541 /
-&RAMP ID='hrrpua_hep_160_150', T=  104.00, F=753.1950 /
-&RAMP ID='hrrpua_hep_160_150', T=  106.00, F=740.8563 /
-&RAMP ID='hrrpua_hep_160_150', T=  108.00, F=726.0787 /
-&RAMP ID='hrrpua_hep_160_150', T=  110.00, F=714.0284 /
-&RAMP ID='hrrpua_hep_160_150', T=  112.00, F=706.8120 /
-&RAMP ID='hrrpua_hep_160_150', T=  114.00, F=710.3763 /
-&RAMP ID='hrrpua_hep_160_150', T=  116.00, F=727.5028 /
-&RAMP ID='hrrpua_hep_160_150', T=  118.00, F=756.2175 /
-&RAMP ID='hrrpua_hep_160_150', T=  120.00, F=784.4421 /
-&RAMP ID='hrrpua_hep_160_150', T=  122.00, F=805.5317 /
-&RAMP ID='hrrpua_hep_160_150', T=  124.00, F=827.0638 /
-&RAMP ID='hrrpua_hep_160_150', T=  126.00, F=846.0275 /
-&RAMP ID='hrrpua_hep_160_150', T=  128.00, F=856.0287 /
-&RAMP ID='hrrpua_hep_160_150', T=  130.00, F=851.0859 /
-&RAMP ID='hrrpua_hep_160_150', T=  132.00, F=843.2533 /
-&RAMP ID='hrrpua_hep_160_150', T=  134.00, F=843.8978 /
-&RAMP ID='hrrpua_hep_160_150', T=  136.00, F=849.0555 /
-&RAMP ID='hrrpua_hep_160_150', T=  138.00, F=854.7686 /
-&RAMP ID='hrrpua_hep_160_150', T=  140.00, F=858.2701 /
-&RAMP ID='hrrpua_hep_160_150', T=  142.00, F=869.0893 /
-&RAMP ID='hrrpua_hep_160_150', T=  144.00, F=887.8790 /
-&RAMP ID='hrrpua_hep_160_150', T=  146.00, F=910.6537 /
-&RAMP ID='hrrpua_hep_160_150', T=  148.00, F=932.8723 /
-&RAMP ID='hrrpua_hep_160_150', T=  150.00, F=951.5995 /
-&RAMP ID='hrrpua_hep_160_150', T=  152.00, F=984.5817 /
-&RAMP ID='hrrpua_hep_160_150', T=  154.00, F=1020.9110 /
-&RAMP ID='hrrpua_hep_160_150', T=  156.00, F=1040.7583 /
-&RAMP ID='hrrpua_hep_160_150', T=  158.00, F=1050.6350 /
-&RAMP ID='hrrpua_hep_160_150', T=  160.00, F=1058.6284 /
-&RAMP ID='hrrpua_hep_160_150', T=  162.00, F=1054.9483 /
-&RAMP ID='hrrpua_hep_160_150', T=  164.00, F=1043.8783 /
-&RAMP ID='hrrpua_hep_160_150', T=  166.00, F=1025.3837 /
-&RAMP ID='hrrpua_hep_160_150', T=  168.00, F=1005.4873 /
-&RAMP ID='hrrpua_hep_160_150', T=  170.00, F=1000.7002 /
-&RAMP ID='hrrpua_hep_160_150', T=  172.00, F=1010.4066 /
-&RAMP ID='hrrpua_hep_160_150', T=  174.00, F=1018.4751 /
-&RAMP ID='hrrpua_hep_160_150', T=  176.00, F=1026.0550 /
-&RAMP ID='hrrpua_hep_160_150', T=  178.00, F=1045.9313 /
-&RAMP ID='hrrpua_hep_160_150', T=  180.00, F=1067.8061 /
-&RAMP ID='hrrpua_hep_160_150', T=  182.00, F=1075.3093 /
-&RAMP ID='hrrpua_hep_160_150', T=  184.00, F=1074.7011 /
-&RAMP ID='hrrpua_hep_160_150', T=  186.00, F=1065.1305 /
-&RAMP ID='hrrpua_hep_160_150', T=  188.00, F=1055.5355 /
-&RAMP ID='hrrpua_hep_160_150', T=  190.00, F=1045.4280 /
-&RAMP ID='hrrpua_hep_160_150', T=  192.00, F=1030.2320 /
-&RAMP ID='hrrpua_hep_160_150', T=  194.00, F=1019.7763 /
-&RAMP ID='hrrpua_hep_160_150', T=  196.00, F=1028.5364 /
-&RAMP ID='hrrpua_hep_160_150', T=  198.00, F=1051.2105 /
-&RAMP ID='hrrpua_hep_160_150', T=  200.00, F=1071.0072 /
-&RAMP ID='hrrpua_hep_160_150', T=  202.00, F=1086.2491 /
-&RAMP ID='hrrpua_hep_160_150', T=  204.00, F=1106.0478 /
-&RAMP ID='hrrpua_hep_160_150', T=  206.00, F=1121.1394 /
-&RAMP ID='hrrpua_hep_160_150', T=  208.00, F=1129.1003 /
-&RAMP ID='hrrpua_hep_160_150', T=  210.00, F=1116.9392 /
-&RAMP ID='hrrpua_hep_160_150', T=  212.00, F=1102.2203 /
-&RAMP ID='hrrpua_hep_160_150', T=  214.00, F=1093.1275 /
-&RAMP ID='hrrpua_hep_160_150', T=  216.00, F=1084.6519 /
-&RAMP ID='hrrpua_hep_160_150', T=  218.00, F=1086.0232 /
-&RAMP ID='hrrpua_hep_160_150', T=  220.00, F=1088.3397 /
-&RAMP ID='hrrpua_hep_160_150', T=  222.00, F=1093.6463 /
-&RAMP ID='hrrpua_hep_160_150', T=  224.00, F=1105.4163 /
-&RAMP ID='hrrpua_hep_160_150', T=  226.00, F=1121.7404 /
-&RAMP ID='hrrpua_hep_160_150', T=  228.00, F=1130.7068 /
-&RAMP ID='hrrpua_hep_160_150', T=  230.00, F=1135.9758 /
-&RAMP ID='hrrpua_hep_160_150', T=  232.00, F=1139.8813 /
-&RAMP ID='hrrpua_hep_160_150', T=  234.00, F=1126.4566 /
-&RAMP ID='hrrpua_hep_160_150', T=  236.00, F=1122.2029 /
-&RAMP ID='hrrpua_hep_160_150', T=  238.00, F=1124.9507 /
-&RAMP ID='hrrpua_hep_160_150', T=  240.00, F=1121.6748 /
-&RAMP ID='hrrpua_hep_160_150', T=  242.00, F=1116.7282 /
-&RAMP ID='hrrpua_hep_160_150', T=  244.00, F=1117.0939 /
-&RAMP ID='hrrpua_hep_160_150', T=  246.00, F=1114.5294 /
-&RAMP ID='hrrpua_hep_160_150', T=  248.00, F=1123.8125 /
-&RAMP ID='hrrpua_hep_160_150', T=  250.00, F=1139.9380 /
-&RAMP ID='hrrpua_hep_160_150', T=  252.00, F=1144.4409 /
-&RAMP ID='hrrpua_hep_160_150', T=  254.00, F=1154.5595 /
-&RAMP ID='hrrpua_hep_160_150', T=  256.00, F=1172.3112 /
-&RAMP ID='hrrpua_hep_160_150', T=  258.00, F=1181.9763 /
-&RAMP ID='hrrpua_hep_160_150', T=  260.00, F=1189.5673 /
-&RAMP ID='hrrpua_hep_160_150', T=  262.00, F=1199.8518 /
-&RAMP ID='hrrpua_hep_160_150', T=  264.00, F=1207.0653 /
-&RAMP ID='hrrpua_hep_160_150', T=  266.00, F=1215.3292 /
-&RAMP ID='hrrpua_hep_160_150', T=  268.00, F=1222.2760 /
-&RAMP ID='hrrpua_hep_160_150', T=  270.00, F=1215.2624 /
-&RAMP ID='hrrpua_hep_160_150', T=  272.00, F=1204.1529 /
-&RAMP ID='hrrpua_hep_160_150', T=  274.00, F=1191.6152 /
-&RAMP ID='hrrpua_hep_160_150', T=  276.00, F=1165.8616 /
-&RAMP ID='hrrpua_hep_160_150', T=  278.00, F=1124.6280 /
-&RAMP ID='hrrpua_hep_160_150', T=  280.00, F=1086.8116 /
-&RAMP ID='hrrpua_hep_160_150', T=  282.00, F=1051.5676 /
-&RAMP ID='hrrpua_hep_160_150', T=  284.00, F=1025.6603 /
-&RAMP ID='hrrpua_hep_160_150', T=  286.00, F=1006.7561 /
-&RAMP ID='hrrpua_hep_160_150', T=  288.00, F=987.9079 /
-&RAMP ID='hrrpua_hep_160_150', T=  290.00, F=979.6178 /
-&RAMP ID='hrrpua_hep_160_150', T=  292.00, F=980.6730 /
-&RAMP ID='hrrpua_hep_160_150', T=  294.00, F=981.3841 /
-&RAMP ID='hrrpua_hep_160_150', T=  296.00, F=975.0971 /
-&RAMP ID='hrrpua_hep_160_150', T=  298.00, F=961.6122 /
-&RAMP ID='hrrpua_hep_160_150', T=  300.00, F=944.9841 /
-&RAMP ID='hrrpua_hep_160_150', T=  302.00, F=922.9953 /
-&RAMP ID='hrrpua_hep_160_150', T=  304.00, F=897.7646 /
-&RAMP ID='hrrpua_hep_160_150', T=  306.00, F=874.5214 /
-&RAMP ID='hrrpua_hep_160_150', T=  308.00, F=848.3746 /
-&RAMP ID='hrrpua_hep_160_150', T=  310.00, F=824.1616 /
-&RAMP ID='hrrpua_hep_160_150', T=  312.00, F=810.6229 /
-&RAMP ID='hrrpua_hep_160_150', T=  314.00, F=802.5108 /
-&RAMP ID='hrrpua_hep_160_150', T=  316.00, F=798.8485 /
-&RAMP ID='hrrpua_hep_160_150', T=  318.00, F=779.1043 /
-&RAMP ID='hrrpua_hep_160_150', T=  320.00, F=731.7546 /
-&RAMP ID='hrrpua_hep_160_150', T=  322.00, F=670.6147 /
-&RAMP ID='hrrpua_hep_160_150', T=  324.00, F=593.4895 /
-&RAMP ID='hrrpua_hep_160_150', T=  326.00, F=511.1231 /
-&RAMP ID='hrrpua_hep_160_150', T=  328.00, F=416.2598 /
-&RAMP ID='hrrpua_hep_160_150', T=  330.00, F=308.8996 /
-&RAMP ID='hrrpua_hep_160_150', T=  332.00, F=189.0426 /
-&RAMP ID='hrrpua_hep_160_150', T=  334.00, F=56.6887 /
+! Model pan area = 0.0225 m^2, dHch = 39540.0 kJ/kg
+! Peak HRRPUA = 1115.147 kW/m2 
 
+&RAMP ID='hrrpua_hep_160_150', T=0.000, F=0.25685 /
+&RAMP ID='hrrpua_hep_160_150', T=2.000, F=0.22886 /
+&RAMP ID='hrrpua_hep_160_150', T=4.000, F=0.24425 /
+&RAMP ID='hrrpua_hep_160_150', T=6.000, F=0.31813 /
+&RAMP ID='hrrpua_hep_160_150', T=8.000, F=0.42294 /
+&RAMP ID='hrrpua_hep_160_150', T=10.000, F=0.47353 /
+&RAMP ID='hrrpua_hep_160_150', T=12.000, F=0.45063 /
+&RAMP ID='hrrpua_hep_160_150', T=14.000, F=0.43512 /
+&RAMP ID='hrrpua_hep_160_150', T=16.000, F=0.46588 /
+&RAMP ID='hrrpua_hep_160_150', T=18.000, F=0.49845 /
+&RAMP ID='hrrpua_hep_160_150', T=20.000, F=0.51396 /
+&RAMP ID='hrrpua_hep_160_150', T=22.000, F=0.53576 /
+&RAMP ID='hrrpua_hep_160_150', T=24.000, F=0.57314 /
+&RAMP ID='hrrpua_hep_160_150', T=26.000, F=0.59654 /
+&RAMP ID='hrrpua_hep_160_150', T=28.000, F=0.59534 /
+&RAMP ID='hrrpua_hep_160_150', T=30.000, F=0.57562 /
+&RAMP ID='hrrpua_hep_160_150', T=32.000, F=0.55014 /
+&RAMP ID='hrrpua_hep_160_150', T=34.000, F=0.53355 /
+&RAMP ID='hrrpua_hep_160_150', T=36.000, F=0.52931 /
+&RAMP ID='hrrpua_hep_160_150', T=38.000, F=0.52390 /
+&RAMP ID='hrrpua_hep_160_150', T=40.000, F=0.51661 /
+&RAMP ID='hrrpua_hep_160_150', T=42.000, F=0.51293 /
+&RAMP ID='hrrpua_hep_160_150', T=44.000, F=0.52556 /
+&RAMP ID='hrrpua_hep_160_150', T=46.000, F=0.55461 /
+&RAMP ID='hrrpua_hep_160_150', T=48.000, F=0.57021 /
+&RAMP ID='hrrpua_hep_160_150', T=50.000, F=0.58094 /
+&RAMP ID='hrrpua_hep_160_150', T=52.000, F=0.57591 /
+&RAMP ID='hrrpua_hep_160_150', T=54.000, F=0.56727 /
+&RAMP ID='hrrpua_hep_160_150', T=56.000, F=0.55745 /
+&RAMP ID='hrrpua_hep_160_150', T=58.000, F=0.55450 /
+&RAMP ID='hrrpua_hep_160_150', T=60.000, F=0.54808 /
+&RAMP ID='hrrpua_hep_160_150', T=62.000, F=0.54294 /
+&RAMP ID='hrrpua_hep_160_150', T=64.000, F=0.53846 /
+&RAMP ID='hrrpua_hep_160_150', T=66.000, F=0.54031 /
+&RAMP ID='hrrpua_hep_160_150', T=68.000, F=0.54728 /
+&RAMP ID='hrrpua_hep_160_150', T=70.000, F=0.55947 /
+&RAMP ID='hrrpua_hep_160_150', T=72.000, F=0.57376 /
+&RAMP ID='hrrpua_hep_160_150', T=74.000, F=0.57624 /
+&RAMP ID='hrrpua_hep_160_150', T=76.000, F=0.58620 /
+&RAMP ID='hrrpua_hep_160_150', T=78.000, F=0.59816 /
+&RAMP ID='hrrpua_hep_160_150', T=80.000, F=0.60956 /
+&RAMP ID='hrrpua_hep_160_150', T=82.000, F=0.61109 /
+&RAMP ID='hrrpua_hep_160_150', T=84.000, F=0.60406 /
+&RAMP ID='hrrpua_hep_160_150', T=86.000, F=0.59372 /
+&RAMP ID='hrrpua_hep_160_150', T=88.000, F=0.59065 /
+&RAMP ID='hrrpua_hep_160_150', T=90.000, F=0.59393 /
+&RAMP ID='hrrpua_hep_160_150', T=92.000, F=0.60488 /
+&RAMP ID='hrrpua_hep_160_150', T=94.000, F=0.60589 /
+&RAMP ID='hrrpua_hep_160_150', T=96.000, F=0.60354 /
+&RAMP ID='hrrpua_hep_160_150', T=98.000, F=0.60679 /
+&RAMP ID='hrrpua_hep_160_150', T=100.000, F=0.61670 /
+&RAMP ID='hrrpua_hep_160_150', T=102.000, F=0.62310 /
+&RAMP ID='hrrpua_hep_160_150', T=104.000, F=0.62236 /
+&RAMP ID='hrrpua_hep_160_150', T=106.000, F=0.60901 /
+&RAMP ID='hrrpua_hep_160_150', T=108.000, F=0.58198 /
+&RAMP ID='hrrpua_hep_160_150', T=110.000, F=0.56394 /
+&RAMP ID='hrrpua_hep_160_150', T=112.000, F=0.56437 /
+&RAMP ID='hrrpua_hep_160_150', T=114.000, F=0.57825 /
+&RAMP ID='hrrpua_hep_160_150', T=116.000, F=0.59218 /
+&RAMP ID='hrrpua_hep_160_150', T=118.000, F=0.60632 /
+&RAMP ID='hrrpua_hep_160_150', T=120.000, F=0.62989 /
+&RAMP ID='hrrpua_hep_160_150', T=122.000, F=0.65779 /
+&RAMP ID='hrrpua_hep_160_150', T=124.000, F=0.67967 /
+&RAMP ID='hrrpua_hep_160_150', T=126.000, F=0.68478 /
+&RAMP ID='hrrpua_hep_160_150', T=128.000, F=0.68581 /
+&RAMP ID='hrrpua_hep_160_150', T=130.000, F=0.69298 /
+&RAMP ID='hrrpua_hep_160_150', T=132.000, F=0.69366 /
+&RAMP ID='hrrpua_hep_160_150', T=134.000, F=0.68494 /
+&RAMP ID='hrrpua_hep_160_150', T=136.000, F=0.66753 /
+&RAMP ID='hrrpua_hep_160_150', T=138.000, F=0.67765 /
+&RAMP ID='hrrpua_hep_160_150', T=140.000, F=0.70668 /
+&RAMP ID='hrrpua_hep_160_150', T=142.000, F=0.72205 /
+&RAMP ID='hrrpua_hep_160_150', T=144.000, F=0.71997 /
+&RAMP ID='hrrpua_hep_160_150', T=146.000, F=0.72177 /
+&RAMP ID='hrrpua_hep_160_150', T=148.000, F=0.74186 /
+&RAMP ID='hrrpua_hep_160_150', T=150.000, F=0.77439 /
+&RAMP ID='hrrpua_hep_160_150', T=152.000, F=0.80552 /
+&RAMP ID='hrrpua_hep_160_150', T=154.000, F=0.82111 /
+&RAMP ID='hrrpua_hep_160_150', T=156.000, F=0.84396 /
+&RAMP ID='hrrpua_hep_160_150', T=158.000, F=0.85894 /
+&RAMP ID='hrrpua_hep_160_150', T=160.000, F=0.86107 /
+&RAMP ID='hrrpua_hep_160_150', T=162.000, F=0.85079 /
+&RAMP ID='hrrpua_hep_160_150', T=164.000, F=0.83795 /
+&RAMP ID='hrrpua_hep_160_150', T=166.000, F=0.83680 /
+&RAMP ID='hrrpua_hep_160_150', T=168.000, F=0.82640 /
+&RAMP ID='hrrpua_hep_160_150', T=170.000, F=0.80426 /
+&RAMP ID='hrrpua_hep_160_150', T=172.000, F=0.79136 /
+&RAMP ID='hrrpua_hep_160_150', T=174.000, F=0.81093 /
+&RAMP ID='hrrpua_hep_160_150', T=176.000, F=0.84557 /
+&RAMP ID='hrrpua_hep_160_150', T=178.000, F=0.86773 /
+&RAMP ID='hrrpua_hep_160_150', T=180.000, F=0.86281 /
+&RAMP ID='hrrpua_hep_160_150', T=182.000, F=0.85797 /
+&RAMP ID='hrrpua_hep_160_150', T=184.000, F=0.86566 /
+&RAMP ID='hrrpua_hep_160_150', T=186.000, F=0.87366 /
+&RAMP ID='hrrpua_hep_160_150', T=188.000, F=0.86077 /
+&RAMP ID='hrrpua_hep_160_150', T=190.000, F=0.84487 /
+&RAMP ID='hrrpua_hep_160_150', T=192.000, F=0.83233 /
+&RAMP ID='hrrpua_hep_160_150', T=194.000, F=0.82684 /
+&RAMP ID='hrrpua_hep_160_150', T=196.000, F=0.82006 /
+&RAMP ID='hrrpua_hep_160_150', T=198.000, F=0.82839 /
+&RAMP ID='hrrpua_hep_160_150', T=200.000, F=0.86652 /
+&RAMP ID='hrrpua_hep_160_150', T=202.000, F=0.90365 /
+&RAMP ID='hrrpua_hep_160_150', T=204.000, F=0.91565 /
+&RAMP ID='hrrpua_hep_160_150', T=206.000, F=0.90120 /
+&RAMP ID='hrrpua_hep_160_150', T=208.000, F=0.88950 /
+&RAMP ID='hrrpua_hep_160_150', T=210.000, F=0.89949 /
+&RAMP ID='hrrpua_hep_160_150', T=212.000, F=0.91378 /
+&RAMP ID='hrrpua_hep_160_150', T=214.000, F=0.89913 /
+&RAMP ID='hrrpua_hep_160_150', T=216.000, F=0.87314 /
+&RAMP ID='hrrpua_hep_160_150', T=218.000, F=0.85962 /
+&RAMP ID='hrrpua_hep_160_150', T=220.000, F=0.86136 /
+&RAMP ID='hrrpua_hep_160_150', T=222.000, F=0.88818 /
+&RAMP ID='hrrpua_hep_160_150', T=224.000, F=0.91109 /
+&RAMP ID='hrrpua_hep_160_150', T=226.000, F=0.92128 /
+&RAMP ID='hrrpua_hep_160_150', T=228.000, F=0.91471 /
+&RAMP ID='hrrpua_hep_160_150', T=230.000, F=0.90481 /
+&RAMP ID='hrrpua_hep_160_150', T=232.000, F=0.91196 /
+&RAMP ID='hrrpua_hep_160_150', T=234.000, F=0.92149 /
+&RAMP ID='hrrpua_hep_160_150', T=236.000, F=0.92792 /
+&RAMP ID='hrrpua_hep_160_150', T=238.000, F=0.90621 /
+&RAMP ID='hrrpua_hep_160_150', T=240.000, F=0.89428 /
+&RAMP ID='hrrpua_hep_160_150', T=242.000, F=0.89490 /
+&RAMP ID='hrrpua_hep_160_150', T=244.000, F=0.90590 /
+&RAMP ID='hrrpua_hep_160_150', T=246.000, F=0.91848 /
+&RAMP ID='hrrpua_hep_160_150', T=248.000, F=0.91131 /
+&RAMP ID='hrrpua_hep_160_150', T=250.000, F=0.91026 /
+&RAMP ID='hrrpua_hep_160_150', T=252.000, F=0.91825 /
+&RAMP ID='hrrpua_hep_160_150', T=254.000, F=0.93939 /
+&RAMP ID='hrrpua_hep_160_150', T=256.000, F=0.95040 /
+&RAMP ID='hrrpua_hep_160_150', T=258.000, F=0.96313 /
+&RAMP ID='hrrpua_hep_160_150', T=260.000, F=0.96540 /
+&RAMP ID='hrrpua_hep_160_150', T=262.000, F=0.96933 /
+&RAMP ID='hrrpua_hep_160_150', T=264.000, F=0.96965 /
+&RAMP ID='hrrpua_hep_160_150', T=266.000, F=0.97350 /
+&RAMP ID='hrrpua_hep_160_150', T=268.000, F=0.98670 /
+&RAMP ID='hrrpua_hep_160_150', T=270.000, F=0.99911 /
+&RAMP ID='hrrpua_hep_160_150', T=272.000, F=0.99057 /
+&RAMP ID='hrrpua_hep_160_150', T=274.000, F=0.95807 /
+&RAMP ID='hrrpua_hep_160_150', T=276.000, F=0.92982 /
+&RAMP ID='hrrpua_hep_160_150', T=278.000, F=0.90961 /
+&RAMP ID='hrrpua_hep_160_150', T=280.000, F=0.89275 /
+&RAMP ID='hrrpua_hep_160_150', T=282.000, F=0.85797 /
+&RAMP ID='hrrpua_hep_160_150', T=284.000, F=0.82119 /
+&RAMP ID='hrrpua_hep_160_150', T=286.000, F=0.79603 /
+&RAMP ID='hrrpua_hep_160_150', T=288.000, F=0.79739 /
+&RAMP ID='hrrpua_hep_160_150', T=290.000, F=0.80029 /
+&RAMP ID='hrrpua_hep_160_150', T=292.000, F=0.79769 /
+&RAMP ID='hrrpua_hep_160_150', T=294.000, F=0.79508 /
+&RAMP ID='hrrpua_hep_160_150', T=296.000, F=0.78634 /
+&RAMP ID='hrrpua_hep_160_150', T=298.000, F=0.78148 /
+&RAMP ID='hrrpua_hep_160_150', T=300.000, F=0.76855 /
+&RAMP ID='hrrpua_hep_160_150', T=302.000, F=0.74796 /
+&RAMP ID='hrrpua_hep_160_150', T=304.000, F=0.72737 /
+&RAMP ID='hrrpua_hep_160_150', T=306.000, F=0.70440 /
+&RAMP ID='hrrpua_hep_160_150', T=308.000, F=0.68355 /
+&RAMP ID='hrrpua_hep_160_150', T=310.000, F=0.66867 /
+&RAMP ID='hrrpua_hep_160_150', T=312.000, F=0.65347 /
+&RAMP ID='hrrpua_hep_160_150', T=314.000, F=0.64107 /
+&RAMP ID='hrrpua_hep_160_150', T=316.000, F=0.63077 /
+&RAMP ID='hrrpua_hep_160_150', T=318.000, F=0.62875 /
+&RAMP ID='hrrpua_hep_160_150', T=320.000, F=0.62068 /
+&RAMP ID='hrrpua_hep_160_150', T=322.000, F=0.57615 /
+&RAMP ID='hrrpua_hep_160_150', T=324.000, F=0.47870 /
+&RAMP ID='hrrpua_hep_160_150', T=326.000, F=0.37500 /
+&RAMP ID='hrrpua_hep_160_150', T=328.000, F=0.30293 /
+&RAMP ID='hrrpua_hep_160_150', T=330.000, F=0.22949 /
+&RAMP ID='hrrpua_hep_160_150', T=332.000, F=0.15663 /
+&RAMP ID='hrrpua_hep_160_150', T=334.000, F=0.08669 /
 
 &RAMP ID='hrrpua_hep_160_150', T=  335.00, F=0.0 /
 
